@@ -1,0 +1,41 @@
+# Core Data Science & Numerical Computation
+pandas>=2.0.0
+numpy>=1.24.0
+scipy>=1.10.0
+
+# Visualization & Plotting
+matplotlib>=3.7.0
+seaborn>=0.12.0
+
+# Classical Machine Learning & Serialization
+scikit-learn>=1.3.0
+xgboost>=2.0.0
+lightgbm>=4.0.0
+joblib>=1.3.0
+
+# Deep Learning Frameworks (PyTorch & TensorFlow / Keras)
+torch>=2.0.0
+torchvision>=0.15.0
+tensorflow>=2.15.0
+keras>=3.0.0
+
+# Computer Vision & Defect Classification
+ultralytics>=8.0.0
+pillow>=10.0.0
+opencv-python>=4.8.0
+kagglehub>=0.2.0
+
+# Report Generation & Document Processing
+markdown-it-py>=3.0.0
+pypdf>=4.0.0
+
+# Interactive Development & Jupyter Notebooks
+jupyter>=1.0.0
+ipykernel>=6.25.0
+ipywidgets>=8.1.0
+nbformat>=5.9.0
+nbconvert>=7.10.0
+
+# Explainable AI (XAI) & Model Interpretability
+shap>=0.44.0
+lime>=0.2.0

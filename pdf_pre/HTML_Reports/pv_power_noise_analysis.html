@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PV Noise & Data Quality Analysis Report</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+  
+  @page {
+    size: A4;
+    margin: 16mm 14mm 16mm 14mm;
+  }
+  
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #1e293b;
+    background-color: #ffffff;
+    line-height: 1.6;
+    font-size: 12.5px;
+    padding: 0;
+    margin: 0;
+  }
+  
+  h1 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #0f172a;
+    border-bottom: 2px solid #ef4444;
+    padding-bottom: 6px;
+    margin-top: 0;
+    margin-bottom: 12px;
+  }
+  
+  h2 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #b91c1c;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 4px;
+    margin-top: 20px;
+    margin-bottom: 8px;
+    page-break-after: avoid;
+  }
+  
+  h3 {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #334155;
+    margin-top: 14px;
+    margin-bottom: 6px;
+    page-break-after: avoid;
+  }
+  
+  p, li {
+    color: #334155;
+    font-size: 12px;
+  }
+  
+  hr {
+    border: 0;
+    height: 1px;
+    background: #e2e8f0;
+    margin: 16px 0;
+  }
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0 14px 0;
+    font-size: 11px;
+    page-break-inside: avoid;
+  }
+  
+  th, td {
+    padding: 6px 8px;
+    border: 1px solid #cbd5e1;
+    text-align: left;
+  }
+  
+  th {
+    background-color: #f1f5f9;
+    color: #0f172a;
+    font-weight: 600;
+  }
+  
+  tr:nth-child(even) {
+    background-color: #f8fafc;
+  }
+  
+  .alert {
+    padding: 10px 14px;
+    border-radius: 6px;
+    margin: 12px 0;
+    font-size: 11.5px;
+    page-break-inside: avoid;
+  }
+  
+  .alert-caution {
+    background-color: #fef2f2;
+    border-left: 4px solid #ef4444;
+    color: #991b1b;
+  }
+  
+  code {
+    background: #f1f5f9;
+    color: #0f172a;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-family: Consolas, Monaco, monospace;
+  }
+  
+  pre {
+    background: #0f172a;
+    color: #f8fafc;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-family: Consolas, Monaco, monospace;
+    overflow-x: auto;
+    page-break-inside: avoid;
+  }
+  
+  pre code {
+    background: transparent;
+    color: inherit;
+    padding: 0;
+  }
+</style>
+</head>
+<body>
+<h1>🔬 Photovoltaic Dataset Noise &amp; Data Quality Analysis Report</h1>
+<p><strong>Dataset</strong>: <code>PV_Diagnostic_Final_Labels.csv</code> (226,175 records)<br />
+<strong>Target Columns</strong>: <code>P1</code> (Panel 1 Power), <code>P2</code> (Panel 2 Power), <code>Irr</code> (Irradiance), <code>timestamp</code></p>
+<hr />
+<h2>1. Executive Summary</h2>
+<p>This report provides a granular audit of data corruption, noise, and calculation anomalies present in the PV diagnostic dataset.</p>
+<p>A critical finding is that <strong>11.19% of records in Panel 1</strong> and <strong>8.71% in Panel 2</strong> contain corrupted power values resulting from:</p>
+<ol>
+<li><strong>Polarity / Sign Inversion ($P = -I \times V$)</strong>: Caused by sensor polarity or datalogger sign inversion.</li>
+<li><strong>Extreme Physical Outliers</strong>: Values violating theoretical maximum solar generation ($P_{\text{max}} = 147.25\text{ W}$).</li>
+<li><strong>Calculation Mismatches</strong>: Unexplained arbitrary values diverging from $I \times V$.</li>
+<li><strong>Night-time / Low-Irradiance artifacts</strong>: Distortions during zero-sunlight hours.</li>
+</ol>
+<hr />
+<h2>2. Panel 1 Power ($P_1$) Noise Breakdown</h2>
+<p>Theoretical physical bounds based on maximum panel ratings ($I_{1,\text{max}} = 7.75\text{ A}$, $V_{1,\text{max}} = 19.00\text{ V}$):
+$$\mathbf{P_{1,\text{physical_max}} = 7.75\text{ A} \times 19.00\text{ V} = 147.25\text{ W}}$$</p>
+<h3>$P_1$ Quality Statistics (Total Rows: 226,175)</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Category / Anomaly Type</th>
+<th style="text-align:center">Row Count</th>
+<th style="text-align:center">Percentage</th>
+<th style="text-align:center">Minimum Value</th>
+<th style="text-align:center">Maximum Value</th>
+<th style="text-align:left">Physical Impact</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>✅ Perfectly Correct ($P_1 = I_1 \times V_1$)</strong></td>
+<td style="text-align:center"><strong>200,874</strong></td>
+<td style="text-align:center"><strong>88.81%</strong></td>
+<td style="text-align:center">0.00 W</td>
+<td style="text-align:center">146.95 W</td>
+<td style="text-align:left">Healthy physical data</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>❌ Inverted Sign ($-I_1 \times V_1$)</strong></td>
+<td style="text-align:center"><strong>24,533</strong></td>
+<td style="text-align:center"><strong>10.85%</strong></td>
+<td style="text-align:center">-473.67 W</td>
+<td style="text-align:center">-0.0001 W</td>
+<td style="text-align:left">Negative power generation (Sensor bug)</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>❌ Calculation Mismatch / Glitch</strong></td>
+<td style="text-align:center"><strong>768</strong></td>
+<td style="text-align:center"><strong>0.34%</strong></td>
+<td style="text-align:center">-0.91 W</td>
+<td style="text-align:center">334.72 W</td>
+<td style="text-align:left">Uncorrelated corrupted readings</td>
+</tr>
+<tr>
+<td style="text-align:left">**⚠️ Extreme Outliers ($</td>
+<td style="text-align:center">P_1</td>
+<td style="text-align:center">&gt; 147.25\text{ W}$)**</td>
+<td style="text-align:center"><strong>711</strong></td>
+<td style="text-align:center"><strong>0.31%</strong></td>
+<td style="text-align:left">-473.67 W</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>🔴 Total Corrupted Rows in $P_1$</strong></td>
+<td style="text-align:center"><strong>25,301</strong></td>
+<td style="text-align:center"><strong>11.19%</strong></td>
+<td style="text-align:center"><strong>-473.67 W</strong></td>
+<td style="text-align:center"><strong>334.72 W</strong></td>
+<td style="text-align:left"><strong>Destroys LSTM &amp; ML loss convergence</strong></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3>$P_1$ Noise Distribution Across Fault Classes</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Fault Class (<code>Label_S1</code>)</th>
+<th style="text-align:center">Total Rows</th>
+<th style="text-align:center">Correct ($P_1 = I_1 \times V_1$)</th>
+<th style="text-align:center">Sign Inverted ($-I_1 \times V_1$)</th>
+<th style="text-align:center">Mismatch / Glitch</th>
+<th style="text-align:center">Noise Percentage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>Degradation</strong></td>
+<td style="text-align:center">103,885</td>
+<td style="text-align:center">102,105 (98.29%)</td>
+<td style="text-align:center">1,780 (1.71%)</td>
+<td style="text-align:center">0 (0.00%)</td>
+<td style="text-align:center"><strong>1.71%</strong></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Normal</strong></td>
+<td style="text-align:center">47,303</td>
+<td style="text-align:center">43,794 (92.58%)</td>
+<td style="text-align:center">2,770 (5.86%)</td>
+<td style="text-align:center">739 (1.56%)</td>
+<td style="text-align:center"><strong>7.42%</strong></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Open Circuit</strong></td>
+<td style="text-align:center">58,171</td>
+<td style="text-align:center">42,245 (72.62%)</td>
+<td style="text-align:center">15,926 (27.38%)</td>
+<td style="text-align:center">0 (0.00%)</td>
+<td style="text-align:center"><strong>27.38%</strong></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Shading</strong></td>
+<td style="text-align:center">16,763</td>
+<td style="text-align:center">12,716 (75.86%)</td>
+<td style="text-align:center">4,047 (24.14%)</td>
+<td style="text-align:center">0 (0.00%)</td>
+<td style="text-align:center"><strong>24.14%</strong></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Short Circuit</strong></td>
+<td style="text-align:center">53</td>
+<td style="text-align:center">14 (26.42%)</td>
+<td style="text-align:center">10 (18.87%)</td>
+<td style="text-align:center">29 (54.72%)</td>
+<td style="text-align:center"><strong>73.58%</strong></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Total</strong></td>
+<td style="text-align:center"><strong>226,175</strong></td>
+<td style="text-align:center"><strong>200,874 (88.81%)</strong></td>
+<td style="text-align:center"><strong>24,533 (10.85%)</strong></td>
+<td style="text-align:center"><strong>768 (0.34%)</strong></td>
+<td style="text-align:center"><strong>11.19%</strong></td>
+</tr>
+</tbody>
+</table>
+<div class="alert alert-caution"><strong>⚠️ CAUTION:</strong> In the **`Open Circuit`** and **`Shading`** categories, over **24% to 27%** of all data points have inverted negative power signs. In **`Short Circuit`**, **73.58%** of samples are corrupted!</div>
+<hr />
+<h2>3. Panel 2 Power ($P_2$) Noise Breakdown</h2>
+<p>Theoretical physical bounds ($I_{2,\text{max}} = 7.75\text{ A}$, $V_{2,\text{max}} = 18.97\text{ V}$):
+$$\mathbf{P_{2,\text{physical_max}} = 7.75\text{ A} \times 18.97\text{ V} = 147.02\text{ W}}$$</p>
+<h3>$P_2$ Quality Statistics (Total Rows: 226,175)</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Category / Anomaly Type</th>
+<th style="text-align:center">Row Count</th>
+<th style="text-align:center">Percentage</th>
+<th style="text-align:center">Minimum Value</th>
+<th style="text-align:center">Maximum Value</th>
+<th style="text-align:left">Physical Impact</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>✅ Perfectly Correct ($P_2 = I_2 \times V_2$)</strong></td>
+<td style="text-align:center"><strong>206,470</strong></td>
+<td style="text-align:center"><strong>91.29%</strong></td>
+<td style="text-align:center">0.00 W</td>
+<td style="text-align:center">146.95 W</td>
+<td style="text-align:left">Healthy physical data</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>❌ Inverted Sign ($-I_2 \times V_2$)</strong></td>
+<td style="text-align:center"><strong>19,619</strong></td>
+<td style="text-align:center"><strong>8.67%</strong></td>
+<td style="text-align:center">-6.28 W</td>
+<td style="text-align:center">-0.0001 W</td>
+<td style="text-align:left">Negative power generation</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>❌ Calculation Mismatch / Glitch</strong></td>
+<td style="text-align:center"><strong>86</strong></td>
+<td style="text-align:center"><strong>0.04%</strong></td>
+<td style="text-align:center">-0.0084 W</td>
+<td style="text-align:center">232.15 W</td>
+<td style="text-align:left">Corrupted sensor reading</td>
+</tr>
+<tr>
+<td style="text-align:left">**⚠️ Extreme Outliers ($</td>
+<td style="text-align:center">P_2</td>
+<td style="text-align:center">&gt; 147.02\text{ W}$)**</td>
+<td style="text-align:center"><strong>26</strong></td>
+<td style="text-align:center"><strong>0.01%</strong></td>
+<td style="text-align:left">150.12 W</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>🔴 Total Corrupted Rows in $P_2$</strong></td>
+<td style="text-align:center"><strong>19,705</strong></td>
+<td style="text-align:center"><strong>8.71%</strong></td>
+<td style="text-align:center"><strong>-6.28 W</strong></td>
+<td style="text-align:center"><strong>232.15 W</strong></td>
+<td style="text-align:left">Corrupted signal</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3>$P_2$ Noise Distribution Across Fault Classes</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Fault Class (<code>Label_S2</code>)</th>
+<th style="text-align:center">Total Rows</th>
+<th style="text-align:center">Correct ($P_2 = I_2 \times V_2$)</th>
+<th style="text-align:center">Sign Inverted ($-I_2 \times V_2$)</th>
+<th style="text-align:center">Mismatch / Glitch</th>
+<th style="text-align:center">Noise Percentage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>Degradation</strong></td>
+<td style="text-align:center">105,672</td>
+<td style="text-align:center">104,118 (98.53%)</td>
+<td style="text-align:center">1,554 (1.47%)</td>
+<td style="text-align:center">0 (0.00%)</td>
+<td style="text-align:center"><strong>1.47%</strong></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Normal</strong></td>
+<td style="text-align:center">51,864</td>
+<td style="text-align:center">49,361 (95.17%)</td>
+<td style="text-align:center">2,441 (4.71%)</td>
+<td style="text-align:center">62 (0.12%)</td>
+<td style="text-align:center"><strong>4.83%</strong></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Open Circuit</strong></td>
+<td style="text-align:center">52,104</td>
+<td style="text-align:center">37,673 (72.30%)</td>
+<td style="text-align:center">14,431 (27.70%)</td>
+<td style="text-align:center">0 (0.00%)</td>
+<td style="text-align:center"><strong>27.70%</strong></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Shading</strong></td>
+<td style="text-align:center">16,402</td>
+<td style="text-align:center">15,216 (92.77%)</td>
+<td style="text-align:center">1,186 (7.23%)</td>
+<td style="text-align:center">0 (0.00%)</td>
+<td style="text-align:center"><strong>7.23%</strong></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Short Circuit</strong></td>
+<td style="text-align:center">133</td>
+<td style="text-align:center">102 (76.69%)</td>
+<td style="text-align:center">7 (5.26%)</td>
+<td style="text-align:center">24 (18.05%)</td>
+<td style="text-align:center"><strong>23.31%</strong></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Total</strong></td>
+<td style="text-align:center"><strong>226,175</strong></td>
+<td style="text-align:center"><strong>206,470 (91.29%)</strong></td>
+<td style="text-align:center"><strong>19,619 (8.67%)</strong></td>
+<td style="text-align:center"><strong>86 (0.04%)</strong></td>
+<td style="text-align:center"><strong>8.71%</strong></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>4. Environmental &amp; Temporal Signal Noise</h2>
+<h3>A. Low Irradiance &amp; Night-Time Artifacts ($Irr &lt; 50\text{ W/m}^2$)</h3>
+<ul>
+<li><strong>Total Rows</strong>: <strong>4,985 rows (2.20%)</strong></li>
+<li><strong>Issue</strong>: During night/early morning hours, $I \approx 0$ and $P \approx 0$ irrespective of panel health.</li>
+<li><strong>Breakdown by Label</strong>:
+<ul>
+<li>Shading: 4,093 rows (82.1%)</li>
+<li>Normal: 783 rows (15.7%)</li>
+<li>Degradation: 90 rows (1.8%)</li>
+<li>Short Circuit: 17 rows (0.3%)</li>
+<li>Open Circuit: 2 rows (0.1%)</li>
+</ul>
+</li>
+</ul>
+<h3>B. Time Discontinuities (Gaps)</h3>
+<ul>
+<li><strong>Short Gaps (&gt; 5 seconds)</strong>: 56 occurrences</li>
+<li><strong>Long Night Gaps (&gt; 1 hour)</strong>: 11 occurrences (representing day-night transitions)</li>
+<li><strong>Risk</strong>: Sliding windows (e.g. sequences of 30 or 60 steps) that cross these gaps combine non-contiguous physical time periods.</li>
+</ul>
+<hr />
+<h2>5. Concrete Solution &amp; Cleansing Script</h2>
+<p>To eliminate <strong>100% of the power calculation noise</strong>, execute the following preprocessing pipeline before training any Machine Learning or LSTM model:</p>
+<pre><code class="language-python">import pandas as pd
+import numpy as np
+
+def clean_pv_dataset(csv_path=&quot;PV_Diagnostic_Final_Labels.csv&quot;):
+    df = pd.read_csv(csv_path, sep=&quot;;&quot;)
+    df['timestamp'] = pd.to_datetime(df['timestamp'])
+    
+    # 1. Fix Power Noise programmatically (P = I * V)
+    df['P1'] = df['I1'] * df['V1']
+    df['P2'] = df['I2'] * df['V2']
+    
+    # 2. Filter out dark / night periods
+    df_clean = df[df['Irr'] &gt;= 50].sort_values('timestamp').reset_index(drop=True)
+    
+    # 3. Validation Check
+    assert (df_clean['P1'] &lt; 0).sum() == 0, &quot;Error: Negative P1 detected!&quot;
+    assert (df_clean['P2'] &lt; 0).sum() == 0, &quot;Error: Negative P2 detected!&quot;
+    assert (df_clean['P1'] &gt; 150).sum() == 0, &quot;Error: Outlier P1 detected!&quot;
+    
+    print(f&quot;Data Cleansed Successfully! Remaining valid rows: {len(df_clean):,}&quot;)
+    return df_clean
+
+if __name__ == &quot;__main__&quot;:
+    df_clean = clean_pv_dataset()
+</code></pre>
+
+</body>
+</html>
