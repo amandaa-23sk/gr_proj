@@ -1,50 +1,20 @@
-import os
-import joblib
 import pandas as pd
-
 from langchain.tools import tool
 
+from agentic_rag.tools.model_loader import (
+    get_model,
+    DEFAULT_MODEL_PATH,
+    FAULT_CLASSES
+)
 
-# Model path for PV panel 1 fault classification model
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-DEFAULT_MODEL_PATH = os.path.join(BASE_DIR, "models", "pv_xgboost_s1.pkl")
-
-# Operational class labels
-FAULT_CLASSES = {
-    0: "Normal",
-    1: "Short Circuit",
-    2: "Open Circuit",
-    3: "Degradation",
-    4: "Shading"
-}
-
-_model = None
-_features = None
-
-
-def _get_model(model_path: str = DEFAULT_MODEL_PATH):
-    """Load and cache the trained XGBoost model package."""
-    global _model, _features
-    if _model is None:
-        if not os.path.exists(model_path):
-            raise FileNotFoundError(f"Model file not found at: {model_path}")
-        pkg = joblib.load(model_path)
-        if isinstance(pkg, dict):
-            _model = pkg.get("model", pkg)
-            _features = pkg.get("features", ["I1", "V1", "T1", "P1", "Irr"])
-        else:
-            _model = pkg
-            _features = ["I1", "V1", "T1", "P1", "Irr"]
-    return _model, _features
-
-
+@tool
 def diagnose_sensor_readings(
     i1: float,
     v1: float = None,
     t1: float = None,
     irr: float = None,
     p1: float = None,
-    model_path: str = DEFAULT_MODEL_PATH
+    model_identifier: str = DEFAULT_MODEL_PATH
 ) -> dict:
     """
     Diagnoses the operating state and potential faults of a solar PV panel from sensor readings.
@@ -55,7 +25,7 @@ def diagnose_sensor_readings(
         t1 (float, optional): Panel temperature in Celsius (T1).
         irr (float, optional): Solar irradiance in W/m² (Irr).
         p1 (float, optional): Panel power in Watts (P1). Calculated as i1 * v1 if None.
-        model_path (str, optional): Path to the trained pv_xgboost_s1.pkl checkpoint.
+        model_identifier (str, optional): Model key (e.g. 'pv_xgboost_s1') or path to .pkl model.
 
     Returns:
         dict: Diagnostic result with status, diagnosis, confidence, and telemetry.
@@ -76,7 +46,8 @@ def diagnose_sensor_readings(
     if p1 is None:
         p1 = float(i1) * float(v1)
 
-    model, features = _get_model(model_path)
+    # Load model and expected features using model_loader
+    model, features = get_model(model_identifier)
 
     # Prepare DataFrame matching model features
     telemetry = {
@@ -107,9 +78,7 @@ def diagnose_sensor_readings(
     }
 
 
-# Export LangChain tool instance for Agentic RAG workflows
-try:
-    pv_diagnosis_tool = tool(diagnose_sensor_readings)
-    diagnose_sensor_readings.invoke = pv_diagnosis_tool.invoke
-except Exception:
-    pv_diagnosis_tool = diagnose_sensor_readings
+# LangChain Agent Tool instance
+pv_diagnosis_tool = tool(diagnose_sensor_readings)
+# Enable .invoke on the base function as well
+diagnose_sensor_readings.invoke = pv_diagnosis_tool.invoke
