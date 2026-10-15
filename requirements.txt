@@ -39,3 +39,18 @@ nbconvert>=7.10.0
 # Explainable AI (XAI) & Model Interpretability
 shap>=0.44.0
 lime>=0.2.0
+
+# Agentic RAG & LLM Orchestration
+langchain>=0.2.0
+langchain-core>=0.2.0
+langchain-community>=0.2.0
+langchain-text-splitters>=0.2.0
+
+# Vector Database & Embedding Models (RAG)
+chromadb>=0.5.0
+langchain-chroma>=0.1.0
+sentence-transformers>=2.2.0
+langchain-huggingface>=0.0.3
+faiss-cpu>=1.8.0
+
+
