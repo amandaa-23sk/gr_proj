@@ -22,3 +22,5 @@ Thumbs.db
 
 # Excluded from remote repository
 notebooks/4_ml_digital_twin_expected_power.ipynb
+
+.env/
